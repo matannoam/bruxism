@@ -8,12 +8,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/bruxins/musicplugin"
 	"github.com/iopred/bruxism"
 	"github.com/iopred/bruxism/carbonitexplugin"
+	"github.com/iopred/bruxism/comicplugin"
 	"github.com/iopred/bruxism/directmessageinviteplugin"
 	"github.com/iopred/bruxism/discordavatarplugin"
 	"github.com/iopred/bruxism/emojiplugin"
 	"github.com/iopred/bruxism/inviteplugin"
+	"github.com/iopred/bruxism/liveplugin"
+	"github.com/iopred/bruxism/mtgplugin"
 	"github.com/iopred/bruxism/numbertriviaplugin"
 	"github.com/iopred/bruxism/playingplugin"
 	"github.com/iopred/bruxism/reminderplugin"
@@ -88,6 +92,7 @@ func main() {
 	if bot.MashableKey != "" {
 		cp.AddCommand("numbertrivia", numbertriviaplugin.NumberTriviaCommand, numbertriviaplugin.NumberTriviaHelp)
 	}
+	cp.AddCommand("mtg", mtgplugin.MTGCommand, mtgplugin.MTGHelp)
 
 	youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs, youtubeLiveChatIDs)
 	bot.RegisterService(youtube)
@@ -96,6 +101,7 @@ func main() {
 	bot.RegisterPlugin(youtube, slowmodeplugin.New())
 	bot.RegisterPlugin(youtube, topstreamersplugin.New(youtube))
 	bot.RegisterPlugin(youtube, streamerplugin.New(youtube))
+	bot.RegisterPlugin(youtube, comicplugin.New())
 	bot.RegisterPlugin(youtube, reminderplugin.New())
 
 	// Register the Discord service if we have an email or token.
@@ -114,10 +120,13 @@ func main() {
 		bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(discord, streamerplugin.New(youtube))
 		bot.RegisterPlugin(discord, playingplugin.New())
+		bot.RegisterPlugin(discord, comicplugin.New())
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
 		bot.RegisterPlugin(discord, emojiplugin.New())
+		bot.RegisterPlugin(discord, liveplugin.New(discord, youtube))
 		bot.RegisterPlugin(discord, discordavatarplugin.New())
+		bot.RegisterPlugin(discord, musicplugin.New(discord))
 		if carbonitexKey != "" {
 			bot.RegisterPlugin(discord, carbonitexplugin.New(carbonitexKey))
 		}
@@ -131,6 +140,7 @@ func main() {
 		bot.RegisterPlugin(irc, cp)
 		bot.RegisterPlugin(irc, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(irc, streamerplugin.New(youtube))
+		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
 	}
 
