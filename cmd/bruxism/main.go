@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bwmarrin/bruxins/musicplugin"
 	"github.com/iopred/bruxism"
 	"github.com/iopred/bruxism/carbonitexplugin"
 	"github.com/iopred/bruxism/comicplugin"
@@ -18,6 +17,7 @@ import (
 	"github.com/iopred/bruxism/inviteplugin"
 	"github.com/iopred/bruxism/liveplugin"
 	"github.com/iopred/bruxism/mtgplugin"
+	"github.com/iopred/bruxism/musicplugin"
 	"github.com/iopred/bruxism/numbertriviaplugin"
 	"github.com/iopred/bruxism/playingplugin"
 	"github.com/iopred/bruxism/reminderplugin"
