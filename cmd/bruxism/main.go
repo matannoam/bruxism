@@ -10,6 +10,7 @@ import (
 
 	"github.com/iopred/bruxism"
 	"github.com/iopred/bruxism/carbonitexplugin"
+	"github.com/iopred/bruxism/chartplugin"
 	"github.com/iopred/bruxism/comicplugin"
 	"github.com/iopred/bruxism/directmessageinviteplugin"
 	"github.com/iopred/bruxism/discordavatarplugin"
@@ -98,6 +99,7 @@ func main() {
 	bot.RegisterPlugin(youtube, slowmodeplugin.New())
 	bot.RegisterPlugin(youtube, topstreamersplugin.New(youtube))
 	bot.RegisterPlugin(youtube, streamerplugin.New(youtube))
+	bot.RegisterPlugin(youtube, chartplugin.New())
 	bot.RegisterPlugin(youtube, comicplugin.New())
 	bot.RegisterPlugin(youtube, reminderplugin.New())
 
@@ -117,6 +119,7 @@ func main() {
 		bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(discord, streamerplugin.New(youtube))
 		bot.RegisterPlugin(discord, playingplugin.New())
+		bot.RegisterPlugin(discord, chartplugin.New())
 		bot.RegisterPlugin(discord, comicplugin.New())
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
@@ -137,6 +140,7 @@ func main() {
 		bot.RegisterPlugin(irc, cp)
 		bot.RegisterPlugin(irc, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(irc, streamerplugin.New(youtube))
+		bot.RegisterPlugin(irc, chartplugin.New())
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
 	}
