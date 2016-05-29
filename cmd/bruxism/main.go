@@ -139,7 +139,7 @@ func main() {
 		if carbonitexKey != "" {
 			bot.RegisterPlugin(discord, carbonitexplugin.New(carbonitexKey))
 		}
-		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(discord, triviaplugin.New())
 		bot.RegisterPlugin(discord, ytip)
 	}
 
@@ -154,7 +154,7 @@ func main() {
 		bot.RegisterPlugin(irc, chartplugin.New())
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
-		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(irc, triviaplugin.New())
 		bot.RegisterPlugin(irc, ytip)
 	}
 
@@ -166,7 +166,7 @@ func main() {
 		bot.RegisterPlugin(slack, cp)
 		bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(slack, streamerplugin.New(youtube))
-		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(slack, triviaplugin.New())
 		bot.RegisterPlugin(slack, ytip)
 	}
 
