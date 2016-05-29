@@ -27,6 +27,8 @@ import (
 	"github.com/iopred/bruxism/statsplugin"
 	"github.com/iopred/bruxism/streamerplugin"
 	"github.com/iopred/bruxism/topstreamersplugin"
+	"github.com/iopred/bruxism/triviaplugin"
+	"github.com/iopred/bruxism/youtubeinviteplugin"
 )
 
 var youtubeURL bool
@@ -34,7 +36,6 @@ var youtubeAuth string
 var youtubeConfigFilename string
 var youtubeTokenFilename string
 var youtubeLiveVideoIDs string
-var youtubeLiveChatIDs string
 var discordToken string
 var discordEmail string
 var discordPassword string
@@ -57,7 +58,6 @@ func init() {
 	flag.StringVar(&youtubeConfigFilename, "youtubeconfig", "youtubeoauth2config.json", "The filename that contains the oauth2 config.")
 	flag.StringVar(&youtubeTokenFilename, "youtubetoken", "youtubeoauth2token.json", "The filename to store the oauth2 token.")
 	flag.StringVar(&youtubeLiveVideoIDs, "youtubelivevideoids", "", "Comma separated list of video id's to poll.")
-	flag.StringVar(&youtubeLiveChatIDs, "youtubelivechatids", "", "Comma separated list of chat id's to poll.")
 	flag.StringVar(&discordToken, "discordtoken", "", "Discord token.")
 	flag.StringVar(&discordEmail, "discordemail", "", "Discord account email.")
 	flag.StringVar(&discordPassword, "discordpassword", "", "Discord account password.")
@@ -97,7 +97,9 @@ func main() {
 	}
 	cp.AddCommand("mtg", mtgplugin.MTGCommand, mtgplugin.MTGHelp)
 
-	youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs, youtubeLiveChatIDs)
+	ytip := youtubeinviteplugin.New()
+
+	youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs)
 	bot.RegisterService(youtube)
 
 	bot.RegisterPlugin(youtube, cp)
@@ -107,6 +109,7 @@ func main() {
 	bot.RegisterPlugin(youtube, chartplugin.New())
 	bot.RegisterPlugin(youtube, comicplugin.New())
 	bot.RegisterPlugin(youtube, reminderplugin.New())
+	bot.RegisterPlugin(youtube, triviaplugin.New())
 
 	// Register the Discord service if we have an email or token.
 	if (discordEmail != "" && discordPassword != "") || discordToken != "" {
@@ -136,6 +139,8 @@ func main() {
 		if carbonitexKey != "" {
 			bot.RegisterPlugin(discord, carbonitexplugin.New(carbonitexKey))
 		}
+		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(discord, ytip)
 	}
 
 	// Register the IRC service if we have an IRC server and Username.
@@ -149,6 +154,8 @@ func main() {
 		bot.RegisterPlugin(irc, chartplugin.New())
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
+		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(irc, ytip)
 	}
 
 	if slackToken != "" {
@@ -159,8 +166,8 @@ func main() {
 		bot.RegisterPlugin(slack, cp)
 		bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(slack, streamerplugin.New(youtube))
-		bot.RegisterPlugin(slack, chartplugin.New())
-		bot.RegisterPlugin(slack, comicplugin.New())
+		bot.RegisterPlugin(youtube, triviaplugin.New())
+		bot.RegisterPlugin(slack, ytip)
 	}
 
 	// Start all our services.
