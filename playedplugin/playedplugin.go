@@ -107,9 +107,6 @@ func (p *playedPlugin) Save() ([]byte, error) {
 }
 
 func (p *playedPlugin) Update(user string, entry string, batch *leveldb.Batch) {
-	p.Lock()
-	defer p.Unlock()
-
 	t := time.Now()
 
 	var u *playedUser
@@ -145,6 +142,9 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	discord := service.(*bruxism.Discord)
 
 	discord.Session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		p.Lock()
+		defer p.Unlock()
+
 		batch := new(leveldb.Batch)
 
 		for _, g := range r.Guilds {
@@ -165,6 +165,9 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 			return
 		}
 
+		p.Lock()
+		defer p.Unlock()
+
 		batch := new(leveldb.Batch)
 
 		for _, pu := range g.Presences {
@@ -179,6 +182,9 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pr *discordgo.PresencesReplace) {
+		p.Lock()
+		defer p.Unlock()
+
 		for _, pu := range *pr {
 			e := ""
 			if pu.Game != nil {
@@ -189,6 +195,9 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pu *discordgo.PresenceUpdate) {
+		p.Lock()
+		defer p.Unlock()
+
 		e := ""
 		if pu.Game != nil {
 			e = pu.Game.Name
@@ -220,8 +229,8 @@ func (p *playedPlugin) Message(bot *bruxism.Bot, service bruxism.Service, messag
 				id = match[1]
 			}
 
-			p.Lock()
-			defer p.Unlock()
+			p.RLock()
+			defer p.RUnlock()
 
 			var u *playedUser
 			b, err := p.db.Get([]byte(id), nil)
