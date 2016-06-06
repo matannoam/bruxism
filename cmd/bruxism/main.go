@@ -183,6 +183,7 @@ func main() {
 		select {
 		case <-c:
 			bot.Save()
+			bot.Close()
 			return
 		case <-t:
 			bot.Save()
