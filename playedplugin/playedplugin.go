@@ -81,6 +81,9 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 	}
 
 	bot.AddCloseFunc(func() {
+		p.Lock()
+		defer p.Unlock()
+
 		p.flush()
 		p.db.Close()
 	})
