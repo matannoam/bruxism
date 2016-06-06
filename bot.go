@@ -28,6 +28,7 @@ type Bot struct {
 	ImgurID     string
 	ImgurAlbum  string
 	MashableKey string
+	closeFuncs  []func()
 }
 
 // MessageRecover is the default panic handler for bruxism.
@@ -117,6 +118,17 @@ func (b *Bot) Save() {
 				}
 			}
 		}
+	}
+}
+
+func (b *Bot) AddCloseFunc(f func()) {
+	b.closeFuncs = append(b.closeFuncs, f)
+}
+
+// Close will close any resources.
+func (b *Bot) Close() {
+	for _, f := range b.closeFuncs {
+		f()
 	}
 }
 

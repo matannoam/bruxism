@@ -3,7 +3,7 @@ package playedplugin
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -13,6 +13,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/iopred/bruxism"
 	"github.com/iopred/discordgo"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type playedEntry struct {
@@ -49,9 +50,13 @@ func (p *playedUser) Update(name string, now time.Time) {
 	p.LastChanged = now
 }
 
+type oldData struct {
+	Users map[string]*playedUser
+}
+
 type playedPlugin struct {
 	sync.RWMutex
-	Users map[string]*playedUser
+	db *leveldb.DB
 }
 
 // Load will load plugin state from a byte array.
@@ -60,10 +65,35 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 		panic("Carbonitex Plugin only supports Discord.")
 	}
 
-	if data != nil {
-		if err := json.Unmarshal(data, p); err != nil {
-			log.Println("Error loading data", err)
+	dbFilename := service.Name() + "/" + p.Name() + "DB"
+
+	migrate := false
+	if _, err := os.Stat(dbFilename); os.IsNotExist(err) {
+		migrate = true
+	}
+
+	var err error
+	p.db, err = leveldb.OpenFile(dbFilename, nil)
+	if err != nil {
+		return err
+	}
+
+	bot.AddCloseFunc(func() { p.db.Close() })
+
+	if data != nil && migrate {
+		batch := new(leveldb.Batch)
+
+		od := &oldData{}
+		if err := json.Unmarshal(data, od); err == nil {
+			for k, u := range od.Users {
+				b, err := json.Marshal(u)
+				if err == nil {
+					batch.Put([]byte(k), b)
+				}
+			}
 		}
+
+		err = p.db.Write(batch, nil)
 	}
 
 	go p.Run(bot, service)
@@ -72,7 +102,7 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 
 // Save will save plugin state to a byte array.
 func (p *playedPlugin) Save() ([]byte, error) {
-	return json.Marshal(p)
+	return nil, nil
 }
 
 func (p *playedPlugin) Update(user string, entry string) {
@@ -81,17 +111,27 @@ func (p *playedPlugin) Update(user string, entry string) {
 
 	t := time.Now()
 
-	u := p.Users[user]
-	if u == nil {
+	var u *playedUser
+	b, err := p.db.Get([]byte(user), nil)
+	if err == leveldb.ErrNotFound {
 		u = &playedUser{
 			Entries:     map[string]*playedEntry{},
 			Current:     entry,
 			LastChanged: t,
 			FirstSeen:   t,
 		}
-		p.Users[user] = u
+	} else {
+		u = &playedUser{}
+		err = json.Unmarshal(b, u)
+		if err != nil {
+			return
+		}
 	}
+
 	u.Update(entry, t)
+
+	b, err = json.Marshal(u)
+	p.db.Put([]byte(user), b, nil)
 }
 
 // Run is the background go routine that executes for the life of the plugin.
@@ -169,10 +209,18 @@ func (p *playedPlugin) Message(bot *bruxism.Bot, service bruxism.Service, messag
 			p.Lock()
 			defer p.Unlock()
 
-			u := p.Users[id]
-			if u == nil {
+			var u *playedUser
+			b, err := p.db.Get([]byte(id), nil)
+			if err == leveldb.ErrNotFound {
 				service.SendMessage(message.Channel(), "I haven't seen that user.")
 				return
+			} else {
+				u = &playedUser{}
+				err = json.Unmarshal(b, u)
+				if err != nil {
+					service.SendMessage(message.Channel(), "I haven't seen that user.")
+					return
+				}
 			}
 
 			if len(u.Entries) == 0 {
@@ -228,7 +276,5 @@ func (p *playedPlugin) Name() string {
 
 // New will create a played plugin.
 func New() bruxism.Plugin {
-	return &playedPlugin{
-		Users: map[string]*playedUser{},
-	}
+	return &playedPlugin{}
 }
