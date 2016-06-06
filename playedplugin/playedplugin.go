@@ -108,6 +108,11 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 				p.Update(pu.User.ID, e)
 			}
 		}
+
+		r.Settings = nil
+		r.UserGuildSettings = nil
+		r.Relationships = nil
+		r.Presences = nil
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
@@ -122,6 +127,8 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 			}
 			p.Update(pu.User.ID, e)
 		}
+
+		g.Presences = nil
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pr *discordgo.PresencesReplace) {
