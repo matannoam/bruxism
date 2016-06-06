@@ -14,6 +14,7 @@ import (
 	"github.com/iopred/bruxism"
 	"github.com/iopred/discordgo"
 	"github.com/syndtr/goleveldb/leveldb"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type playedEntry struct {
@@ -86,7 +87,7 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 		od := &oldData{}
 		if err := json.Unmarshal(data, od); err == nil {
 			for k, u := range od.Users {
-				b, err := json.Marshal(u)
+				b, err := msgpack.Marshal(u)
 				if err == nil {
 					batch.Put([]byte(k), b)
 				}
@@ -105,7 +106,7 @@ func (p *playedPlugin) Save() ([]byte, error) {
 	return nil, nil
 }
 
-func (p *playedPlugin) Update(user string, entry string) {
+func (p *playedPlugin) Update(user string, entry string, batch *leveldb.Batch) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -122,7 +123,7 @@ func (p *playedPlugin) Update(user string, entry string) {
 		}
 	} else {
 		u = &playedUser{}
-		err = json.Unmarshal(b, u)
+		err = msgpack.Unmarshal(b, u)
 		if err != nil {
 			return
 		}
@@ -130,8 +131,13 @@ func (p *playedPlugin) Update(user string, entry string) {
 
 	u.Update(entry, t)
 
-	b, err = json.Marshal(u)
-	p.db.Put([]byte(user), b, nil)
+	b, err = msgpack.Marshal(u)
+
+	if batch == nil {
+		p.db.Put([]byte(user), b, nil)
+	} else {
+		batch.Put([]byte(user), b)
+	}
 }
 
 // Run is the background go routine that executes for the life of the plugin.
@@ -139,15 +145,19 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	discord := service.(*bruxism.Discord)
 
 	discord.Session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		batch := new(leveldb.Batch)
+
 		for _, g := range r.Guilds {
 			for _, pu := range g.Presences {
 				e := ""
 				if pu.Game != nil {
 					e = pu.Game.Name
 				}
-				p.Update(pu.User.ID, e)
+				p.Update(pu.User.ID, e, batch)
 			}
 		}
+
+		p.db.Write(batch, nil)
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
@@ -155,13 +165,17 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 			return
 		}
 
+		batch := new(leveldb.Batch)
+
 		for _, pu := range g.Presences {
 			e := ""
 			if pu.Game != nil {
 				e = pu.Game.Name
 			}
-			p.Update(pu.User.ID, e)
+			p.Update(pu.User.ID, e, batch)
 		}
+
+		p.db.Write(batch, nil)
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pr *discordgo.PresencesReplace) {
@@ -170,7 +184,7 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 			if pu.Game != nil {
 				e = pu.Game.Name
 			}
-			p.Update(pu.User.ID, e)
+			p.Update(pu.User.ID, e, nil)
 		}
 	})
 
@@ -179,7 +193,7 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 		if pu.Game != nil {
 			e = pu.Game.Name
 		}
-		p.Update(pu.User.ID, e)
+		p.Update(pu.User.ID, e, nil)
 	})
 }
 
@@ -216,7 +230,7 @@ func (p *playedPlugin) Message(bot *bruxism.Bot, service bruxism.Service, messag
 				return
 			} else {
 				u = &playedUser{}
-				err = json.Unmarshal(b, u)
+				err = msgpack.Unmarshal(b, u)
 				if err != nil {
 					service.SendMessage(message.Channel(), "I haven't seen that user.")
 					return
