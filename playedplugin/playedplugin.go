@@ -3,7 +3,7 @@ package playedplugin
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -13,8 +13,6 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/iopred/bruxism"
 	"github.com/iopred/discordgo"
-	"github.com/syndtr/goleveldb/leveldb"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type playedEntry struct {
@@ -51,14 +49,9 @@ func (p *playedUser) Update(name string, now time.Time) {
 	p.LastChanged = now
 }
 
-type oldData struct {
-	Users map[string]*playedUser
-}
-
 type playedPlugin struct {
 	sync.RWMutex
-	db    *leveldb.DB
-	queue []*discordgo.Presence
+	Users map[string]*playedUser
 }
 
 // Load will load plugin state from a byte array.
@@ -67,41 +60,10 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 		panic("Carbonitex Plugin only supports Discord.")
 	}
 
-	dbFilename := service.Name() + "/" + p.Name() + "DB"
-
-	migrate := false
-	if _, err := os.Stat(dbFilename); os.IsNotExist(err) {
-		migrate = true
-	}
-
-	var err error
-	p.db, err = leveldb.OpenFile(dbFilename, nil)
-	if err != nil {
-		return err
-	}
-
-	bot.AddCloseFunc(func() {
-		p.Lock()
-		defer p.Unlock()
-
-		p.flush()
-		p.db.Close()
-	})
-
-	if data != nil && migrate {
-		batch := new(leveldb.Batch)
-
-		od := &oldData{}
-		if err := json.Unmarshal(data, od); err == nil {
-			for k, u := range od.Users {
-				b, err := msgpack.Marshal(u)
-				if err == nil {
-					batch.Put([]byte(k), b)
-				}
-			}
+	if data != nil {
+		if err := json.Unmarshal(data, p); err != nil {
+			log.Println("Error loading data", err)
 		}
-
-		err = p.db.Write(batch, nil)
 	}
 
 	go p.Run(bot, service)
@@ -110,108 +72,75 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 
 // Save will save plugin state to a byte array.
 func (p *playedPlugin) Save() ([]byte, error) {
-	return nil, nil
+	return json.Marshal(p)
 }
 
-func (p *playedPlugin) Update(user string, entry string, batch *leveldb.Batch) {
+func (p *playedPlugin) Update(user string, entry string) {
+	p.Lock()
+	defer p.Unlock()
+
 	t := time.Now()
 
-	var u *playedUser
-	b, err := p.db.Get([]byte(user), nil)
-	if err == leveldb.ErrNotFound {
+	u := p.Users[user]
+	if u == nil {
 		u = &playedUser{
 			Entries:     map[string]*playedEntry{},
 			Current:     entry,
 			LastChanged: t,
 			FirstSeen:   t,
 		}
-	} else {
-		u = &playedUser{}
-		err = msgpack.Unmarshal(b, u)
-		if err != nil {
-			return
-		}
+		p.Users[user] = u
 	}
-
 	u.Update(entry, t)
-
-	b, err = msgpack.Marshal(u)
-
-	if batch == nil {
-		p.db.Put([]byte(user), b, nil)
-	} else {
-		batch.Put([]byte(user), b)
-	}
 }
-
-func (p *playedPlugin) updatePresences(presences []*discordgo.Presence, batch *leveldb.Batch) {
-	for _, pu := range presences {
-		e := ""
-		if pu.Game != nil {
-			e = pu.Game.Name
-		}
-		p.Update(pu.User.ID, e, batch)
-	}
-}
-
-var FLUSH = 500
 
 // Run is the background go routine that executes for the life of the plugin.
 func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	discord := service.(*bruxism.Discord)
+
+	discord.Session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		for _, g := range r.Guilds {
+			for _, pu := range g.Presences {
+				e := ""
+				if pu.Game != nil {
+					e = pu.Game.Name
+				}
+				p.Update(pu.User.ID, e)
+			}
+		}
+	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
 		if g.Unavailable == nil || *g.Unavailable {
 			return
 		}
 
-		p.Lock()
-		defer p.Unlock()
-
-		batch := new(leveldb.Batch)
-
-		p.updatePresences(g.Presences, batch)
-
-		p.db.Write(batch, nil)
+		for _, pu := range g.Presences {
+			e := ""
+			if pu.Game != nil {
+				e = pu.Game.Name
+			}
+			p.Update(pu.User.ID, e)
+		}
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pr *discordgo.PresencesReplace) {
-		p.Lock()
-		defer p.Unlock()
-
 		for _, pu := range *pr {
-			p.queue = append(p.queue, pu)
-		}
-
-		if len(p.queue) > FLUSH {
-			p.flush()
+			e := ""
+			if pu.Game != nil {
+				e = pu.Game.Name
+			}
+			p.Update(pu.User.ID, e)
 		}
 	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, pu *discordgo.PresenceUpdate) {
-		p.Lock()
-		defer p.Unlock()
-
-		p.queue = append(p.queue, &pu.Presence)
-
-		if len(p.queue) > FLUSH {
-			p.flush()
+		e := ""
+		if pu.Game != nil {
+			e = pu.Game.Name
 		}
+		p.Update(pu.User.ID, e)
 	})
-}
-
-func (p *playedPlugin) flush() {
-	if p.queue == nil {
-		return
-	}
-
-	batch := new(leveldb.Batch)
-
-	p.updatePresences(p.queue, batch)
-
-	p.db.Write(batch, nil)
-
-	p.queue = nil
 }
 
 // Help returns a list of help strings that are printed when the user requests them.
@@ -237,28 +166,13 @@ func (p *playedPlugin) Message(bot *bruxism.Bot, service bruxism.Service, messag
 				id = match[1]
 			}
 
-			p.RLock()
-			defer p.RUnlock()
+			p.Lock()
+			defer p.Unlock()
 
-			for _, pu := range p.queue {
-				if pu.User.ID == id {
-					p.flush()
-					break
-				}
-			}
-
-			var u *playedUser
-			b, err := p.db.Get([]byte(id), nil)
-			if err == leveldb.ErrNotFound {
+			u := p.Users[id]
+			if u == nil {
 				service.SendMessage(message.Channel(), "I haven't seen that user.")
 				return
-			} else {
-				u = &playedUser{}
-				err = msgpack.Unmarshal(b, u)
-				if err != nil {
-					service.SendMessage(message.Channel(), "I haven't seen that user.")
-					return
-				}
 			}
 
 			if len(u.Entries) == 0 {
@@ -314,5 +228,7 @@ func (p *playedPlugin) Name() string {
 
 // New will create a played plugin.
 func New() bruxism.Plugin {
-	return &playedPlugin{}
+	return &playedPlugin{
+		Users: map[string]*playedUser{},
+	}
 }
