@@ -57,7 +57,8 @@ type oldData struct {
 
 type playedPlugin struct {
 	sync.RWMutex
-	db *leveldb.DB
+	db    *leveldb.DB
+	queue []*discordgo.Presence
 }
 
 // Load will load plugin state from a byte array.
@@ -79,7 +80,10 @@ func (p *playedPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []by
 		return err
 	}
 
-	bot.AddCloseFunc(func() { p.db.Close() })
+	bot.AddCloseFunc(func() {
+		p.flush()
+		p.db.Close()
+	})
 
 	if data != nil && migrate {
 		batch := new(leveldb.Batch)
@@ -137,28 +141,21 @@ func (p *playedPlugin) Update(user string, entry string, batch *leveldb.Batch) {
 	}
 }
 
+func (p *playedPlugin) updatePresences(presences []*discordgo.Presence, batch *leveldb.Batch) {
+	for _, pu := range presences {
+		e := ""
+		if pu.Game != nil {
+			e = pu.Game.Name
+		}
+		p.Update(pu.User.ID, e, batch)
+	}
+}
+
+var FLUSH = 500
+
 // Run is the background go routine that executes for the life of the plugin.
 func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 	discord := service.(*bruxism.Discord)
-
-	discord.Session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		p.Lock()
-		defer p.Unlock()
-
-		batch := new(leveldb.Batch)
-
-		for _, g := range r.Guilds {
-			for _, pu := range g.Presences {
-				e := ""
-				if pu.Game != nil {
-					e = pu.Game.Name
-				}
-				p.Update(pu.User.ID, e, batch)
-			}
-		}
-
-		p.db.Write(batch, nil)
-	})
 
 	discord.Session.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) {
 		if g.Unavailable == nil || *g.Unavailable {
@@ -170,13 +167,7 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 
 		batch := new(leveldb.Batch)
 
-		for _, pu := range g.Presences {
-			e := ""
-			if pu.Game != nil {
-				e = pu.Game.Name
-			}
-			p.Update(pu.User.ID, e, batch)
-		}
+		p.updatePresences(g.Presences, batch)
 
 		p.db.Write(batch, nil)
 	})
@@ -186,11 +177,11 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 		defer p.Unlock()
 
 		for _, pu := range *pr {
-			e := ""
-			if pu.Game != nil {
-				e = pu.Game.Name
-			}
-			p.Update(pu.User.ID, e, nil)
+			p.queue = append(p.queue, pu)
+		}
+
+		if len(p.queue) > FLUSH {
+			p.flush()
 		}
 	})
 
@@ -198,12 +189,26 @@ func (p *playedPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 		p.Lock()
 		defer p.Unlock()
 
-		e := ""
-		if pu.Game != nil {
-			e = pu.Game.Name
+		p.queue = append(p.queue, &pu.Presence)
+
+		if len(p.queue) > FLUSH {
+			p.flush()
 		}
-		p.Update(pu.User.ID, e, nil)
 	})
+}
+
+func (p *playedPlugin) flush() {
+	if p.queue == nil {
+		return
+	}
+
+	batch := new(leveldb.Batch)
+
+	p.updatePresences(p.queue, batch)
+
+	p.db.Write(batch, nil)
+
+	p.queue = nil
 }
 
 // Help returns a list of help strings that are printed when the user requests them.
@@ -231,6 +236,13 @@ func (p *playedPlugin) Message(bot *bruxism.Bot, service bruxism.Service, messag
 
 			p.RLock()
 			defer p.RUnlock()
+
+			for _, pu := range p.queue {
+				if pu.User.ID == id {
+					p.flush()
+					break
+				}
+			}
 
 			var u *playedUser
 			b, err := p.db.Get([]byte(id), nil)
