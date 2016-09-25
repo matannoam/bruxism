@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -102,6 +103,13 @@ func main() {
 	ytip := youtubeinviteplugin.New()
 
 	youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs)
+	err := youtube.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ytLiveChannel := bruxism.NewYTLiveChannel(youtube.Service)
+
 	bot.RegisterService(youtube)
 
 	bot.RegisterPlugin(youtube, cp)
@@ -112,6 +120,7 @@ func main() {
 	bot.RegisterPlugin(youtube, comicplugin.New())
 	bot.RegisterPlugin(youtube, reminderplugin.New())
 	bot.RegisterPlugin(youtube, triviaplugin.New())
+	bot.RegisterPlugin(youtube, liveplugin.New(ytLiveChannel))
 
 	// Register the Discord service if we have an email or token.
 	if (discordEmail != "" && discordPassword != "") || discordToken != "" {
@@ -136,7 +145,11 @@ func main() {
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
 		bot.RegisterPlugin(discord, emojiplugin.New())
+<<<<<<< HEAD
 		bot.RegisterPlugin(discord, liveplugin.New(discord, youtube))
+=======
+		bot.RegisterPlugin(discord, liveplugin.New(ytLiveChannel))
+>>>>>>> origin
 		bot.RegisterPlugin(discord, discordavatarplugin.New())
 		bot.RegisterPlugin(discord, musicplugin.New(discord))
 		if carbonitexKey != "" {
@@ -158,6 +171,7 @@ func main() {
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
 		bot.RegisterPlugin(irc, triviaplugin.New())
+		bot.RegisterPlugin(irc, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(irc, ytip)
 	}
 
@@ -170,6 +184,7 @@ func main() {
 		bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(slack, streamerplugin.New(youtube))
 		bot.RegisterPlugin(slack, triviaplugin.New())
+		bot.RegisterPlugin(slack, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(slack, ytip)
 	}
 
