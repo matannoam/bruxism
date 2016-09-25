@@ -145,11 +145,7 @@ func main() {
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
 		bot.RegisterPlugin(discord, emojiplugin.New())
-<<<<<<< HEAD
-		bot.RegisterPlugin(discord, liveplugin.New(discord, youtube))
-=======
 		bot.RegisterPlugin(discord, liveplugin.New(ytLiveChannel))
->>>>>>> origin
 		bot.RegisterPlugin(discord, discordavatarplugin.New())
 		bot.RegisterPlugin(discord, musicplugin.New(discord))
 		if carbonitexKey != "" {
