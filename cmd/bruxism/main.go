@@ -21,6 +21,7 @@ import (
 	"github.com/iopred/bruxism/liveplugin"
 	"github.com/iopred/bruxism/mtgplugin"
 	"github.com/iopred/bruxism/musicplugin"
+	"github.com/iopred/bruxism/mysonplugin"
 	"github.com/iopred/bruxism/numbertriviaplugin"
 	"github.com/iopred/bruxism/playedplugin"
 	"github.com/iopred/bruxism/playingplugin"
@@ -158,6 +159,7 @@ func main() {
 		bot.RegisterPlugin(discord, wormholeplugin.New())
 		bot.RegisterPlugin(discord, ytip)
 		bot.RegisterPlugin(discord, keystoneplugin.New())
+		bot.RegisterPlugin(discord, mysonplugin.New())
 	}
 
 	// Register the IRC service if we have an IRC server and Username.
