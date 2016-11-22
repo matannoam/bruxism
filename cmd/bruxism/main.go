@@ -104,7 +104,7 @@ func main() {
 		cp.AddCommand("numbertrivia", numbertriviaplugin.NumberTriviaCommand, numbertriviaplugin.NumberTriviaHelp)
 	}
 	cp.AddCommand("mtg", mtgplugin.MTGCommand, mtgplugin.MTGHelp)
-	cp.AddCommand("quit", func(bot *Bot, service Service, message Message, args string, parts []string) {
+	cp.AddCommand("quit", func(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, args string, parts []string) {
 		if service.IsBotOwner(message) {
 			q <- true
 		}
