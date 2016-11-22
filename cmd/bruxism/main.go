@@ -85,6 +85,8 @@ func init() {
 }
 
 func main() {
+	q := make(chan bool)
+
 	// Set our variables.
 	bot := bruxism.NewBot()
 	bot.ImgurID = imgurID
@@ -102,6 +104,11 @@ func main() {
 		cp.AddCommand("numbertrivia", numbertriviaplugin.NumberTriviaCommand, numbertriviaplugin.NumberTriviaHelp)
 	}
 	cp.AddCommand("mtg", mtgplugin.MTGCommand, mtgplugin.MTGHelp)
+	cp.AddCommand("quit", func(bot *Bot, service Service, message Message, args string, parts []string) {
+		if service.IsBotOwner(message) {
+			q <- true
+		}
+	}, nil)
 
 	ytip := youtubeinviteplugin.New()
 
@@ -204,12 +211,15 @@ func main() {
 
 	for {
 		select {
+		case <-q:
+			break
 		case <-c:
-			bot.Save()
-			bot.Close()
-			return
+			break
 		case <-t:
 			bot.Save()
 		}
 	}
+
+	bot.Save()
+	bot.Close()
 }
