@@ -22,7 +22,6 @@ import (
 	"github.com/iopred/bruxism/musicplugin"
 	"github.com/iopred/bruxism/mysonplugin"
 	"github.com/iopred/bruxism/numbertriviaplugin"
-	"github.com/iopred/bruxism/playedplugin"
 	"github.com/iopred/bruxism/playingplugin"
 	"github.com/iopred/bruxism/reminderplugin"
 	"github.com/iopred/bruxism/slowmodeplugin"
@@ -149,7 +148,6 @@ func main() {
 		bot.RegisterPlugin(discord, cp)
 		bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
 		bot.RegisterPlugin(discord, streamerplugin.New(youtube))
-		bot.RegisterPlugin(discord, playedplugin.New())
 		bot.RegisterPlugin(discord, playingplugin.New())
 		bot.RegisterPlugin(discord, chartplugin.New())
 		bot.RegisterPlugin(discord, comicplugin.New())
