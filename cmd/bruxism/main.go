@@ -96,6 +96,7 @@ func main() {
 	cp := bruxism.NewCommandPlugin()
 	cp.AddCommand("invite", inviteplugin.InviteCommand, inviteplugin.InviteHelp)
 	cp.AddCommand("join", inviteplugin.InviteCommand, nil)
+	statsplugin.IsSeptapus = true
 	cp.AddCommand("stats", statsplugin.StatsCommand, statsplugin.StatsHelp)
 	cp.AddCommand("info", statsplugin.StatsCommand, nil)
 	cp.AddCommand("stat", statsplugin.StatsCommand, nil)
