@@ -8,16 +8,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 )
 
 type carbonitexPlugin struct {
-	bruxism.SimplePlugin
+	comicjerk.SimplePlugin
 	key string
 }
 
-func (p *carbonitexPlugin) carbonitexPluginLoadFunc(bot *bruxism.Bot, service bruxism.Service, data []byte) error {
-	if service.Name() != bruxism.DiscordServiceName {
+func (p *carbonitexPlugin) carbonitexPluginLoadFunc(bot *comicjerk.Bot, service comicjerk.Service, data []byte) error {
+	if service.Name() != comicjerk.DiscordServiceName {
 		panic("Carbonitex Plugin only supports Discord.")
 	}
 
@@ -25,7 +25,7 @@ func (p *carbonitexPlugin) carbonitexPluginLoadFunc(bot *bruxism.Bot, service br
 	return nil
 }
 
-func (p *carbonitexPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
+func (p *carbonitexPlugin) Run(bot *comicjerk.Bot, service comicjerk.Service) {
 	for {
 		<-time.After(5 * time.Minute)
 
@@ -46,9 +46,9 @@ func (p *carbonitexPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 
 // New will create a new carbonitex plugin.
 // This plugin reports the server count to the carbonitex service.
-func New(key string) bruxism.Plugin {
+func New(key string) comicjerk.Plugin {
 	p := &carbonitexPlugin{
-		SimplePlugin: *bruxism.NewSimplePlugin("Carbonitex"),
+		SimplePlugin: *comicjerk.NewSimplePlugin("Carbonitex"),
 		key:          key,
 	}
 	p.LoadFunc = p.carbonitexPluginLoadFunc

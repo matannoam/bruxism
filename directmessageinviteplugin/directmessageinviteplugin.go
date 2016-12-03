@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 )
 
 func discordInviteID(id string) string {
@@ -15,16 +15,16 @@ func discordInviteID(id string) string {
 	return id
 }
 
-func directMessageInviteLoadFunc(bot *bruxism.Bot, service bruxism.Service, data []byte) error {
-	if service.Name() != bruxism.DiscordServiceName {
+func directMessageInviteLoadFunc(bot *comicjerk.Bot, service comicjerk.Service, data []byte) error {
+	if service.Name() != comicjerk.DiscordServiceName {
 		panic("Direct Message Invite Plugin only supports Discord.")
 	}
 	return nil
 }
 
-func directMessageInviteMessageFunc(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) {
-	if service.Name() == bruxism.DiscordServiceName && !service.IsMe(message) && service.IsPrivate(message) {
-		discord := service.(*bruxism.Discord)
+func directMessageInviteMessageFunc(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) {
+	if service.Name() == comicjerk.DiscordServiceName && !service.IsMe(message) && service.IsPrivate(message) {
+		discord := service.(*comicjerk.Discord)
 
 		messageMessage := message.Message()
 		id := discordInviteID(messageMessage)
@@ -34,7 +34,7 @@ func directMessageInviteMessageFunc(bot *bruxism.Bot, service bruxism.Service, m
 				service.PrivateMessage(message.UserID(), fmt.Sprintf("Please visit https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot to add %s to your server.", discord.ApplicationClientID, service.UserName()))
 			} else {
 				if err := service.Join(id); err != nil {
-					if err == bruxism.ErrAlreadyJoined {
+					if err == comicjerk.ErrAlreadyJoined {
 						service.PrivateMessage(message.UserID(), "I have already joined that server.")
 						return
 					}
@@ -48,8 +48,8 @@ func directMessageInviteMessageFunc(bot *bruxism.Bot, service bruxism.Service, m
 }
 
 // New creates a new direct message invite plugin.
-func New() bruxism.Plugin {
-	p := bruxism.NewSimplePlugin("DirectMessageInvite")
+func New() comicjerk.Plugin {
+	p := comicjerk.NewSimplePlugin("DirectMessageInvite")
 	p.LoadFunc = directMessageInviteLoadFunc
 	p.MessageFunc = directMessageInviteMessageFunc
 	return p

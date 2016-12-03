@@ -1,4 +1,4 @@
-package bruxism
+package comicjerk
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ type Message interface {
 // ErrAlreadyJoined is an error dispatched on Join if the bot is already joined to the request.
 var ErrAlreadyJoined = errors.New("Already joined.")
 
-// Service is a service interface, wraps a single service such as YouTube or Discord.
+// Service is a service interface, wraps a single service such as Discord or IRC.
 type Service interface {
 	Name() string
 	UserName() string

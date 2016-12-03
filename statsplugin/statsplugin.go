@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 	"github.com/iopred/discordgo"
 )
 
@@ -27,7 +27,7 @@ func getDurationString(duration time.Duration) string {
 }
 
 // StatsCommand returns bot statistics.
-func StatsCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, command string, parts []string) {
+func StatsCommand(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, command string, parts []string) {
 	stats := runtime.MemStats{}
 	runtime.ReadMemStats(&stats)
 
@@ -35,19 +35,19 @@ func StatsCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Mes
 	buf := &bytes.Buffer{}
 
 	w.Init(buf, 0, 4, 0, ' ', 0)
-	if service.Name() == bruxism.DiscordServiceName {
+	if service.Name() == comicjerk.DiscordServiceName {
 		fmt.Fprintf(w, "```\n")
 	}
-	fmt.Fprintf(w, "Bruxism: \t%s\n", bruxism.VersionString)
-	if service.Name() == bruxism.DiscordServiceName {
+	fmt.Fprintf(w, "ComicJerk: \t%s\n", comicjerk.VersionString)
+	if service.Name() == comicjerk.DiscordServiceName {
 		fmt.Fprintf(w, "Discordgo: \t%s\n", discordgo.VERSION)
 	}
 	fmt.Fprintf(w, "Go: \t%s\n", runtime.Version())
 	fmt.Fprintf(w, "Uptime: \t%s\n", getDurationString(time.Now().Sub(statsStartTime)))
 	fmt.Fprintf(w, "Memory used: \t%s / %s (%s garbage collected)\n", humanize.Bytes(stats.Alloc), humanize.Bytes(stats.Sys), humanize.Bytes(stats.TotalAlloc))
 	fmt.Fprintf(w, "Concurrent tasks: \t%d\n", runtime.NumGoroutine())
-	if service.Name() == bruxism.DiscordServiceName {
-		discord := service.(*bruxism.Discord)
+	if service.Name() == comicjerk.DiscordServiceName {
+		discord := service.(*comicjerk.Discord)
 		fmt.Fprintf(w, "Connected servers: \t%d\n", service.ChannelCount())
 		shards := 0
 		for _, s := range discord.Sessions {
@@ -85,16 +85,12 @@ func StatsCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Mes
 		}
 	}
 
-	if service.Name() == bruxism.DiscordServiceName {
+	if service.Name() == comicjerk.DiscordServiceName {
 		fmt.Fprintf(w, "\n```")
 	}
 
 	w.Flush()
 	out := buf.String()
-
-	if IsSeptapus {
-		out += "\nSeptapus community: https://discord.gg/HWN9pwj\nBuilt with love by iopred."
-	}
 
 	if service.SupportsMultiline() {
 		service.SendMessage(message.Channel(), out)
@@ -108,7 +104,5 @@ func StatsCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Mes
 	}
 }
 
-var IsSeptapus bool = false
-
 // StatsHelp is the help for the stats command.
-var StatsHelp = bruxism.NewCommandHelp("", "Lists bot statistics.")
+var StatsHelp = comicjerk.NewCommandHelp("", "Lists bot statistics.")

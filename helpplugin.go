@@ -1,4 +1,4 @@
-package bruxism
+package comicjerk
 
 import (
 	"encoding/json"
@@ -65,11 +65,6 @@ func (p *helpPlugin) Help(bot *Bot, service Service, message Message, detailed b
 func (p *helpPlugin) Message(bot *Bot, service Service, message Message) {
 	if !service.IsMe(message) {
 		if MatchesCommand(service, "help", message) || MatchesCommand(service, "command", message) {
-			if service.Name() == YouTubeServiceName {
-				service.SendMessage(message.Channel(), "Visit septapus dot com for help.")
-				return
-			}
-
 			_, parts := ParseCommand(service, message)
 
 			help := []string{}

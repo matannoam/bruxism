@@ -2,42 +2,23 @@ package main
 
 import (
 	"flag"
-	// "log"
 	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/iopred/bruxism"
-	"github.com/iopred/bruxism/carbonitexplugin"
-	"github.com/iopred/bruxism/chartplugin"
-	"github.com/iopred/bruxism/comicplugin"
-	"github.com/iopred/bruxism/directmessageinviteplugin"
-	"github.com/iopred/bruxism/discordavatarplugin"
-	"github.com/iopred/bruxism/emojiplugin"
-	"github.com/iopred/bruxism/inviteplugin"
-	"github.com/iopred/bruxism/mtgplugin"
-	"github.com/iopred/bruxism/musicplugin"
-	// "github.com/iopred/bruxism/liveplugin"
-	"github.com/iopred/bruxism/mysonplugin"
-	"github.com/iopred/bruxism/numbertriviaplugin"
-	"github.com/iopred/bruxism/playingplugin"
-	"github.com/iopred/bruxism/reminderplugin"
-	// "github.com/iopred/bruxism/slowmodeplugin"
-	"github.com/iopred/bruxism/statsplugin"
-	// "github.com/iopred/bruxism/streamerplugin"
-	// "github.com/iopred/bruxism/topstreamersplugin"
-	"github.com/iopred/bruxism/triviaplugin"
-	"github.com/iopred/bruxism/wormholeplugin"
-	"github.com/iopred/bruxism/youtubeinviteplugin"
+	"github.com/matannoam/comicjerk"
+	"github.com/matannoam/comicjerk/carbonitexplugin"
+	"github.com/matannoam/comicjerk/chartplugin"
+	"github.com/matannoam/comicjerk/comicplugin"
+	"github.com/matannoam/comicjerk/directmessageinviteplugin"
+	"github.com/matannoam/comicjerk/discordavatarplugin"
+	"github.com/matannoam/comicjerk/inviteplugin"
+	"github.com/matannoam/comicjerk/reminderplugin"
+	"github.com/matannoam/comicjerk/statsplugin"
 )
 
-var youtubeURL bool
-var youtubeAuth string
-var youtubeConfigFilename string
-var youtubeTokenFilename string
-var youtubeLiveVideoIDs string
 var discordToken string
 var discordEmail string
 var discordPassword string
@@ -56,11 +37,6 @@ var mashableKey string
 var carbonitexKey string
 
 func init() {
-	flag.BoolVar(&youtubeURL, "youtubeurl", false, "Generates a URL that provides an auth code.")
-	flag.StringVar(&youtubeAuth, "youtubeauth", "", "Exchanges the provided auth code for an oauth2 token.")
-	flag.StringVar(&youtubeConfigFilename, "youtubeconfig", "youtubeoauth2config.json", "The filename that contains the oauth2 config.")
-	flag.StringVar(&youtubeTokenFilename, "youtubetoken", "youtubeoauth2token.json", "The filename to store the oauth2 token.")
-	flag.StringVar(&youtubeLiveVideoIDs, "youtubelivevideoids", "", "Comma separated list of video id's to poll.")
 	flag.StringVar(&discordToken, "discordtoken", "", "Discord token.")
 	flag.StringVar(&discordEmail, "discordemail", "", "Discord account email.")
 	flag.StringVar(&discordPassword, "discordpassword", "", "Discord account password.")
@@ -86,59 +62,30 @@ func main() {
 	q := make(chan bool)
 
 	// Set our variables.
-	bot := bruxism.NewBot()
+	bot := comicjerk.NewBot()
 	bot.ImgurID = imgurID
 	bot.ImgurAlbum = imgurAlbum
 	bot.MashableKey = mashableKey
 
 	// Generally CommandPlugins don't hold state, so we share one instance of the command plugin for all services.
-	cp := bruxism.NewCommandPlugin()
+	cp := comicjerk.NewCommandPlugin()
 	cp.AddCommand("invite", inviteplugin.InviteCommand, inviteplugin.InviteHelp)
 	cp.AddCommand("join", inviteplugin.InviteCommand, nil)
-	statsplugin.IsSeptapus = true
 	cp.AddCommand("stats", statsplugin.StatsCommand, statsplugin.StatsHelp)
 	cp.AddCommand("info", statsplugin.StatsCommand, nil)
 	cp.AddCommand("stat", statsplugin.StatsCommand, nil)
-	if bot.MashableKey != "" {
-		cp.AddCommand("numbertrivia", numbertriviaplugin.NumberTriviaCommand, numbertriviaplugin.NumberTriviaHelp)
-	}
-	cp.AddCommand("mtg", mtgplugin.MTGCommand, mtgplugin.MTGHelp)
-	cp.AddCommand("quit", func(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, args string, parts []string) {
+	cp.AddCommand("quit", func(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, args string, parts []string) {
 		if service.IsBotOwner(message) {
 			q <- true
 		}
 	}, nil)
 
-	ytip := youtubeinviteplugin.New()
-
-	// youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs)
-	// err := youtube.Init()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// ytLiveChannel := bruxism.NewYTLiveChannel(youtube.Service)
-
-	// bot.RegisterService(youtube)
-
-	// bot.RegisterPlugin(youtube, cp)
-	// bot.RegisterPlugin(youtube, slowmodeplugin.New())
-	// bot.RegisterPlugin(youtube, topstreamersplugin.New(youtube))
-	// bot.RegisterPlugin(youtube, streamerplugin.New(youtube))
-	// bot.RegisterPlugin(youtube, chartplugin.New())
-	// bot.RegisterPlugin(youtube, comicplugin.New())
-	// bot.RegisterPlugin(youtube, reminderplugin.New())
-	// bot.RegisterPlugin(youtube, triviaplugin.New())
-	// bot.RegisterPlugin(youtube, wormholeplugin.New())
-	// bot.RegisterPlugin(youtube, liveplugin.New(ytLiveChannel))
-
-	// Register the Discord service if we have an email or token.
 	if (discordEmail != "" && discordPassword != "") || discordToken != "" {
-		var discord *bruxism.Discord
+		var discord *comicjerk.Discord
 		if discordToken != "" {
-			discord = bruxism.NewDiscord(discordToken)
+			discord = comicjerk.NewDiscord(discordToken)
 		} else {
-			discord = bruxism.NewDiscord(discordEmail, discordPassword)
+			discord = comicjerk.NewDiscord(discordEmail, discordPassword)
 		}
 		discord.ApplicationClientID = discordApplicationClientID
 		discord.OwnerUserID = discordOwnerUserID
@@ -146,55 +93,33 @@ func main() {
 		bot.RegisterService(discord)
 
 		bot.RegisterPlugin(discord, cp)
-		// bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
-		// bot.RegisterPlugin(discord, streamerplugin.New(youtube))
-		bot.RegisterPlugin(discord, playingplugin.New())
 		bot.RegisterPlugin(discord, chartplugin.New())
 		bot.RegisterPlugin(discord, comicplugin.New())
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
-		bot.RegisterPlugin(discord, emojiplugin.New())
-		// bot.RegisterPlugin(discord, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(discord, discordavatarplugin.New())
-		bot.RegisterPlugin(discord, musicplugin.New(discord))
 		if carbonitexKey != "" {
 			bot.RegisterPlugin(discord, carbonitexplugin.New(carbonitexKey))
 		}
-		bot.RegisterPlugin(discord, triviaplugin.New())
-		bot.RegisterPlugin(discord, wormholeplugin.New())
-		bot.RegisterPlugin(discord, ytip)
-		bot.RegisterPlugin(discord, mysonplugin.New())
 	}
 
 	// Register the IRC service if we have an IRC server and Username.
 	if ircServer != "" && ircUsername != "" {
-		irc := bruxism.NewIRC(ircServer, ircUsername, ircPassword, strings.Split(ircChannels, ","))
+		irc := comicjerk.NewIRC(ircServer, ircUsername, ircPassword, strings.Split(ircChannels, ","))
 		bot.RegisterService(irc)
 
 		bot.RegisterPlugin(irc, cp)
-		// bot.RegisterPlugin(irc, topstreamersplugin.New(youtube))
-		// bot.RegisterPlugin(irc, streamerplugin.New(youtube))
 		bot.RegisterPlugin(irc, chartplugin.New())
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
-		bot.RegisterPlugin(irc, triviaplugin.New())
-		bot.RegisterPlugin(irc, wormholeplugin.New())
-		// bot.RegisterPlugin(irc, liveplugin.New(ytLiveChannel))
-		bot.RegisterPlugin(irc, ytip)
 	}
 
 	if slackToken != "" {
-		slack := bruxism.NewSlack(slackToken)
+		slack := comicjerk.NewSlack(slackToken)
 		slack.OwnerUserID = slackOwnerUserID
 		bot.RegisterService(slack)
 
 		bot.RegisterPlugin(slack, cp)
-		// bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
-		// bot.RegisterPlugin(slack, streamerplugin.New(youtube))
-		bot.RegisterPlugin(slack, triviaplugin.New())
-		bot.RegisterPlugin(slack, wormholeplugin.New())
-		// bot.RegisterPlugin(slack, liveplugin.New(ytLiveChannel))
-		bot.RegisterPlugin(slack, ytip)
 	}
 
 	// Start all our services.

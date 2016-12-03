@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 )
 
 // A Reminder holds data about a specific reminder.
@@ -28,7 +28,7 @@ type Reminder struct {
 // ReminderPlugin is a plugin that reminds users.
 type ReminderPlugin struct {
 	sync.RWMutex
-	bot            *bruxism.Bot
+	bot            *comicjerk.Bot
 	Reminders      []*Reminder
 	TotalReminders int
 }
@@ -54,18 +54,18 @@ func (p *ReminderPlugin) random(list []string) string {
 	return list[rand.Intn(len(list))]
 }
 
-func (p *ReminderPlugin) randomReminder(service bruxism.Service) string {
+func (p *ReminderPlugin) randomReminder(service comicjerk.Service) string {
 	ticks := ""
-	if service.Name() == bruxism.DiscordServiceName {
+	if service.Name() == comicjerk.DiscordServiceName {
 		ticks = "`"
 	}
 
 	return fmt.Sprintf("%s%sreminder %s %s%s", ticks, service.CommandPrefix(), p.random(randomTimes), p.random(randomMessages), ticks)
 }
 
-func (p *ReminderPlugin) Help(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, detailed bool) []string {
+func (p *ReminderPlugin) Help(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, detailed bool) []string {
 	help := []string{
-		bruxism.CommandHelp(service, "reminder", "<time> <reminder>", "Sets a reminder that is sent after the provided time.")[0],
+		comicjerk.CommandHelp(service, "reminder", "<time> <reminder>", "Sets a reminder that is sent after the provided time.")[0],
 	}
 	if detailed {
 		help = append(help, []string{
@@ -151,10 +151,10 @@ func (p *ReminderPlugin) AddReminder(reminder *Reminder) error {
 	return nil
 }
 
-func (p *ReminderPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) {
+func (p *ReminderPlugin) Message(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) {
 	if !service.IsMe(message) {
-		if bruxism.MatchesCommand(service, "remind", message) || bruxism.MatchesCommand(service, "reminder", message) {
-			_, parts := bruxism.ParseCommand(service, message)
+		if comicjerk.MatchesCommand(service, "remind", message) || comicjerk.MatchesCommand(service, "reminder", message) {
+			_, parts := comicjerk.ParseCommand(service, message)
 
 			if len(parts) < 2 {
 				service.SendMessage(message.Channel(), fmt.Sprintf("Invalid reminder, no time or message. eg: %s", p.randomReminder(service)))
@@ -176,7 +176,7 @@ func (p *ReminderPlugin) Message(bot *bruxism.Bot, service bruxism.Service, mess
 			}
 
 			requester := message.UserName()
-			if service.Name() == bruxism.DiscordServiceName {
+			if service.Name() == comicjerk.DiscordServiceName {
 				requester = fmt.Sprintf("<@%s>", message.UserID())
 			}
 
@@ -199,7 +199,7 @@ func (p *ReminderPlugin) Message(bot *bruxism.Bot, service bruxism.Service, mess
 }
 
 // SendReminder sends a reminder.
-func (p *ReminderPlugin) SendReminder(service bruxism.Service, reminder *Reminder) {
+func (p *ReminderPlugin) SendReminder(service comicjerk.Service, reminder *Reminder) {
 	if reminder.IsPrivate {
 		service.SendMessage(reminder.Target, fmt.Sprintf("%s you set a reminder: %s", humanize.Time(reminder.StartTime), reminder.Message))
 	} else {
@@ -208,7 +208,7 @@ func (p *ReminderPlugin) SendReminder(service bruxism.Service, reminder *Reminde
 }
 
 // Run will block until a reminder needs to be fired and then fire it.
-func (p *ReminderPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
+func (p *ReminderPlugin) Run(bot *comicjerk.Bot, service comicjerk.Service) {
 	for {
 		p.RLock()
 
@@ -233,7 +233,7 @@ func (p *ReminderPlugin) Run(bot *bruxism.Bot, service bruxism.Service) {
 }
 
 // Load will load plugin state from a byte array.
-func (p *ReminderPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []byte) error {
+func (p *ReminderPlugin) Load(bot *comicjerk.Bot, service comicjerk.Service, data []byte) error {
 	if data != nil {
 		if err := json.Unmarshal(data, p); err != nil {
 			log.Println("Error loading data", err)
@@ -253,7 +253,7 @@ func (p *ReminderPlugin) Save() ([]byte, error) {
 }
 
 // Stats will return the stats for a plugin.
-func (p *ReminderPlugin) Stats(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) []string {
+func (p *ReminderPlugin) Stats(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) []string {
 	return []string{fmt.Sprintf("Reminders: \t%d\n", p.TotalReminders)}
 }
 
@@ -262,7 +262,7 @@ func (p *ReminderPlugin) Name() string {
 }
 
 // New will create a new Reminder plugin.
-func New() bruxism.Plugin {
+func New() comicjerk.Plugin {
 	return &ReminderPlugin{
 		Reminders: []*Reminder{},
 	}

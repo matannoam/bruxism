@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 	"github.com/iopred/comicgen"
 	"github.com/iopred/discordgo"
 )
@@ -20,12 +20,12 @@ import (
 type comicPlugin struct {
 	sync.Mutex
 
-	bruxism.SimplePlugin
-	log    map[string][]bruxism.Message
+	comicjerk.SimplePlugin
+	log    map[string][]comicjerk.Message
 	Comics int
 }
 
-func (p *comicPlugin) Load(bot *bruxism.Bot, service bruxism.Service, data []byte) error {
+func (p *comicPlugin) Load(bot *comicjerk.Bot, service comicjerk.Service, data []byte) error {
 	if data != nil {
 		if err := json.Unmarshal(data, p); err != nil {
 			log.Println("Error loading data", err)
@@ -39,30 +39,28 @@ func (p *comicPlugin) Save() ([]byte, error) {
 	return json.Marshal(p)
 }
 
-func (p *comicPlugin) Help(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, detailed bool) []string {
-	help := bruxism.CommandHelp(service, "comic", "[1-10]", "Creates a comic from recent messages, or a number of messages if provided.")
+func (p *comicPlugin) Help(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, detailed bool) []string {
+	help := comicjerk.CommandHelp(service, "comic", "[1-10]", "Creates a comic from recent messages, or a number of messages if provided.")
 
 	ticks := ""
-	if service.Name() == bruxism.DiscordServiceName {
+	if service.Name() == comicjerk.DiscordServiceName {
 		ticks = "`"
 	}
 	if detailed {
 		help = append(help, []string{
-			bruxism.CommandHelp(service, "customcomic", "[id|name:] <text> | [id|name:] <text>", fmt.Sprintf("Creates a custom comic. Available names: %s%s%s", ticks, strings.Join(comicgen.CharacterNames, ", "), ticks))[0],
-			bruxism.CommandHelp(service, "customcomicsimple", "[id:] <text> | [id:] <text>", "Creates a simple custom comic.")[0],
+			comicjerk.CommandHelp(service, "customcomic", "[id|name:] <text> | [id|name:] <text>", fmt.Sprintf("Creates a custom comic. Available names: %s%s%s", ticks, strings.Join(comicgen.CharacterNames, ", "), ticks))[0],
 			"Examples:",
-			bruxism.CommandHelp(service, "comic", "5", "Creates a comic from the last 5 messages")[0],
-			bruxism.CommandHelp(service, "customcomic", "A | B | C", "Creates a comic with 3 lines.")[0],
-			bruxism.CommandHelp(service, "customcomic", "0: Hi! | 1: Hello! | 0: Goodbye.", "Creates a comic with 3 lines, the second line spoken by a different character")[0],
-			bruxism.CommandHelp(service, "customcomic", "tiki: Hi! | jordy: Hello! | tiki: Goodbye.", "Creates a comic with 3 lines, containing tiki and jordy.")[0],
-			bruxism.CommandHelp(service, "customcomicsimple", "0: Foo | 1: Bar", "Creates a comic with 2 lines, both spoken by different characters.")[0],
+			comicjerk.CommandHelp(service, "comic", "5", "Creates a comic from the last 5 messages")[0],
+			comicjerk.CommandHelp(service, "customcomic", "A | B | C", "Creates a comic with 3 lines.")[0],
+			comicjerk.CommandHelp(service, "customcomic", "0: Hi! | 1: Hello! | 0: Goodbye.", "Creates a comic with 3 lines, the second line spoken by a different character")[0],
+			comicjerk.CommandHelp(service, "customcomic", "tiki: Hi! | jordy: Hello! | tiki: Goodbye.", "Creates a comic with 3 lines, containing tiki and jordy.")[0],
 		}...)
 	}
 
 	return help
 }
 
-func makeScriptFromMessages(service bruxism.Service, message bruxism.Message, messages []bruxism.Message) *comicgen.Script {
+func makeScriptFromMessages(service comicjerk.Service, message comicjerk.Message, messages []comicjerk.Message) *comicgen.Script {
 	speakers := make(map[string]int)
 	avatars := make(map[int]string)
 
@@ -90,9 +88,9 @@ func makeScriptFromMessages(service bruxism.Service, message bruxism.Message, me
 	}
 }
 
-func (p *comicPlugin) makeComic(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, script *comicgen.Script) {
+func (p *comicPlugin) makeComic(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, script *comicgen.Script) {
 	p.Comics++
-	comic := comicgen.NewComicGen("arial", service.Name() != bruxism.DiscordServiceName)
+	comic := comicgen.NewComicGen("arial", service.Name() != comicjerk.DiscordServiceName)
 	image, err := comic.MakeComic(script)
 	if err != nil {
 		service.SendMessage(message.Channel(), fmt.Sprintf("Sorry %s, there was an error creating the comic. %s", message.UserName(), err))
@@ -105,8 +103,8 @@ func (p *comicPlugin) makeComic(bot *bruxism.Bot, service bruxism.Service, messa
 				return
 			}
 
-			if service.Name() == bruxism.DiscordServiceName {
-				discord := service.(*bruxism.Discord)
+			if service.Name() == comicjerk.DiscordServiceName {
+				discord := service.(*comicjerk.Discord)
 				p, err := discord.UserChannelPermissions(message.UserID(), message.Channel())
 				if err == nil && p&discordgo.PermissionAttachFiles != 0 {
 					service.SendFile(message.Channel(), "comic.png", b)
@@ -121,7 +119,7 @@ func (p *comicPlugin) makeComic(bot *bruxism.Bot, service bruxism.Service, messa
 				return
 			}
 
-			if service.Name() == bruxism.DiscordServiceName {
+			if service.Name() == comicjerk.DiscordServiceName {
 				service.SendMessage(message.Channel(), fmt.Sprintf("Here's your comic <@%s>: %s", message.UserID(), url))
 			} else {
 				service.SendMessage(message.Channel(), fmt.Sprintf("Here's your comic %s: %s", message.UserName(), url))
@@ -130,7 +128,7 @@ func (p *comicPlugin) makeComic(bot *bruxism.Bot, service bruxism.Service, messa
 	}
 }
 
-func (p *comicPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) {
+func (p *comicPlugin) Message(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) {
 	if service.IsMe(message) {
 		return
 	}
@@ -140,18 +138,15 @@ func (p *comicPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message
 
 	log, ok := p.log[message.Channel()]
 	if !ok {
-		log = []bruxism.Message{}
+		log = []comicjerk.Message{}
 	}
 
-	if bruxism.MatchesCommand(service, "customcomic", message) || bruxism.MatchesCommand(service, "customcomicsimple", message) {
+	if comicjerk.MatchesCommand(service, "customcomic", message) {
 		ty := comicgen.ComicTypeChat
-		if bruxism.MatchesCommand(service, "customcomicsimple", message) {
-			ty = comicgen.ComicTypeSimple
-		}
 
 		service.Typing(message.Channel())
 
-		str, _ := bruxism.ParseCommand(service, message)
+		str, _ := comicjerk.ParseCommand(service, message)
 
 		messages := []*comicgen.Message{}
 
@@ -195,7 +190,7 @@ func (p *comicPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message
 			Author:   fmt.Sprintf(service.UserName()),
 			Type:     ty,
 		})
-	} else if bruxism.MatchesCommand(service, "comic", message) {
+	} else if comicjerk.MatchesCommand(service, "comic", message) {
 		if len(log) == 0 {
 			service.SendMessage(message.Channel(), fmt.Sprintf("Sorry %s, I don't have enough messages to make a comic yet.", message.UserName()))
 			return
@@ -204,7 +199,7 @@ func (p *comicPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message
 		service.Typing(message.Channel())
 
 		lines := 0
-		linesString, parts := bruxism.ParseCommand(service, message)
+		linesString, parts := comicjerk.ParseCommand(service, message)
 		if len(parts) > 0 {
 			lines, _ = strconv.Atoi(linesString)
 		}
@@ -225,20 +220,20 @@ func (p *comicPlugin) Message(bot *bruxism.Bot, service bruxism.Service, message
 		}
 
 		switch message.Type() {
-		case bruxism.MessageTypeCreate:
+		case comicjerk.MessageTypeCreate:
 			if len(log) < 10 {
 				log = append(log, message)
 			} else {
 				log = append(log[1:], message)
 			}
-		case bruxism.MessageTypeUpdate:
+		case comicjerk.MessageTypeUpdate:
 			for i, m := range log {
 				if m.MessageID() == message.MessageID() {
 					log[i] = message
 					break
 				}
 			}
-		case bruxism.MessageTypeDelete:
+		case comicjerk.MessageTypeDelete:
 			for i, m := range log {
 				if m.MessageID() == message.MessageID() {
 					log = append(log[:i], log[i+1:]...)
@@ -255,13 +250,13 @@ func (p *comicPlugin) Name() string {
 }
 
 // Stats will return the stats for a plugin.
-func (p *comicPlugin) Stats(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) []string {
+func (p *comicPlugin) Stats(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) []string {
 	return []string{fmt.Sprintf("Comics created: \t%d\n", p.Comics)}
 }
 
 // New will create a new comic plugin.
-func New() bruxism.Plugin {
+func New() comicjerk.Plugin {
 	return &comicPlugin{
-		log: make(map[string][]bruxism.Message),
+		log: make(map[string][]comicjerk.Message),
 	}
 }

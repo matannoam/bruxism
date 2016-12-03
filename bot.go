@@ -1,4 +1,4 @@
-package bruxism
+package comicjerk
 
 import (
 	"bytes"
@@ -31,7 +31,7 @@ type Bot struct {
 	closeFuncs  []func()
 }
 
-// MessageRecover is the default panic handler for bruxism.
+// MessageRecover is the default panic handler for the bot.
 func MessageRecover() {
 	if r := recover(); r != nil {
 		log.Println("Recovered:", string(debug.Stack()))

@@ -12,12 +12,12 @@ import (
 	"github.com/gonum/plot/plotter"
 	"github.com/gonum/plot/plotutil"
 	"github.com/gonum/plot/vg"
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 	"github.com/iopred/discordgo"
 )
 
 type chartPlugin struct {
-	bruxism.SimplePlugin
+	comicjerk.SimplePlugin
 }
 
 var randomDirection = []string{
@@ -47,35 +47,35 @@ func (p *chartPlugin) random(list []string) string {
 	return list[rand.Intn(len(list))]
 }
 
-func (p *chartPlugin) randomChart(service bruxism.Service) string {
+func (p *chartPlugin) randomChart(service comicjerk.Service) string {
 	ticks := ""
-	if service.Name() == bruxism.DiscordServiceName {
+	if service.Name() == comicjerk.DiscordServiceName {
 		ticks = "`"
 	}
 
 	return fmt.Sprintf("%s%schart %s %s, %s%s", ticks, service.CommandPrefix(), p.random(randomDirection), p.random(randomY), p.random(randomX), ticks)
 }
 
-func (p *chartPlugin) helpFunc(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, detailed bool) []string {
-	help := bruxism.CommandHelp(service, "chart", "<up|down|flat> <vertical message>, <horizontal message>", "Creates a chart trending in the desired direction.")
+func (p *chartPlugin) helpFunc(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, detailed bool) []string {
+	help := comicjerk.CommandHelp(service, "chart", "<up|down|flat> <vertical message>, <horizontal message>", "Creates a chart trending in the desired direction.")
 
 	if detailed {
 		help = append(help, []string{
 			"Examples:",
-			bruxism.CommandHelp(service, "chart", "down interest, time", "Creates a chart showing declining interest over time")[0],
+			comicjerk.CommandHelp(service, "chart", "down interest, time", "Creates a chart showing declining interest over time")[0],
 		}...)
 	}
 
 	return help
 }
 
-func (p *chartPlugin) messageFunc(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) {
+func (p *chartPlugin) messageFunc(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) {
 	if service.IsMe(message) {
 		return
 	}
 
-	if bruxism.MatchesCommand(service, "chart", message) {
-		query, parts := bruxism.ParseCommand(service, message)
+	if comicjerk.MatchesCommand(service, "chart", message) {
+		query, parts := comicjerk.ParseCommand(service, message)
 		if len(parts) == 0 {
 			service.SendMessage(message.Channel(), fmt.Sprintf("Invalid chart eg: %s", p.randomChart(service)))
 			return
@@ -154,8 +154,8 @@ func (p *chartPlugin) messageFunc(bot *bruxism.Bot, service bruxism.Service, mes
 		w.WriteTo(b)
 
 		go func() {
-			if service.Name() == bruxism.DiscordServiceName {
-				discord := service.(*bruxism.Discord)
+			if service.Name() == comicjerk.DiscordServiceName {
+				discord := service.(*comicjerk.Discord)
 				p, err := discord.UserChannelPermissions(message.UserID(), message.Channel())
 				if err == nil && p&discordgo.PermissionAttachFiles != 0 {
 					service.SendFile(message.Channel(), "chart.png", b)
@@ -170,7 +170,7 @@ func (p *chartPlugin) messageFunc(bot *bruxism.Bot, service bruxism.Service, mes
 				return
 			}
 
-			if service.Name() == bruxism.DiscordServiceName {
+			if service.Name() == comicjerk.DiscordServiceName {
 				service.SendMessage(message.Channel(), fmt.Sprintf("Here's your chart <@%s>: %s", message.UserID(), url))
 			} else {
 				service.SendMessage(message.Channel(), fmt.Sprintf("Here's your chart %s: %s", message.UserName(), url))
@@ -180,9 +180,9 @@ func (p *chartPlugin) messageFunc(bot *bruxism.Bot, service bruxism.Service, mes
 }
 
 // New will create a new comic plugin.
-func New() bruxism.Plugin {
+func New() comicjerk.Plugin {
 	p := &chartPlugin{
-		SimplePlugin: *bruxism.NewSimplePlugin("Chart"),
+		SimplePlugin: *comicjerk.NewSimplePlugin("Chart"),
 	}
 	p.MessageFunc = p.messageFunc
 	p.HelpFunc = p.helpFunc

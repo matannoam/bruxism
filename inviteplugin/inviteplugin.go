@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/iopred/bruxism"
+	"github.com/matannoam/comicjerk"
 )
 
 func discordInviteID(id string) string {
@@ -16,25 +16,23 @@ func discordInviteID(id string) string {
 }
 
 // InviteHelp will return the help text for the invite command.
-func InviteHelp(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message) (string, string) {
+func InviteHelp(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message) (string, string) {
 	switch service.Name() {
-	case bruxism.DiscordServiceName:
-		discord := service.(*bruxism.Discord)
+	case comicjerk.DiscordServiceName:
+		discord := service.(*comicjerk.Discord)
 
 		if discord.ApplicationClientID != "" {
 			return "", fmt.Sprintf("Returns a URL to add %s to your server.", service.UserName())
 		}
 		return "<discordinvite>", "Joins the provided Discord server."
-	case bruxism.YouTubeServiceName:
-		return "<videoid>", "Joins the provided YouTube live stream."
 	}
 	return "<channel>", "Joins the provided channel."
 }
 
 // InviteCommand is a command for accepting an invite to a channel.
-func InviteCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Message, command string, parts []string) {
-	if service.Name() == bruxism.DiscordServiceName {
-		discord := service.(*bruxism.Discord)
+func InviteCommand(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, command string, parts []string) {
+	if service.Name() == comicjerk.DiscordServiceName {
+		discord := service.(*comicjerk.Discord)
 
 		if discord.ApplicationClientID != "" {
 			service.SendMessage(message.Channel(), fmt.Sprintf("Please visit https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot to add %s to your server.", discord.ApplicationClientID, service.UserName()))
@@ -44,16 +42,16 @@ func InviteCommand(bot *bruxism.Bot, service bruxism.Service, message bruxism.Me
 
 	if len(parts) == 1 {
 		join := parts[0]
-		if service.Name() == bruxism.DiscordServiceName {
+		if service.Name() == comicjerk.DiscordServiceName {
 			join = discordInviteID(join)
 		}
 		if err := service.Join(join); err != nil {
-			if service.Name() == bruxism.DiscordServiceName && err == bruxism.ErrAlreadyJoined {
+			if service.Name() == comicjerk.DiscordServiceName && err == comicjerk.ErrAlreadyJoined {
 				service.PrivateMessage(message.UserID(), "I have already joined that server.")
 				return
 			}
 			log.Println("Error joining %s %v", service.Name(), err)
-		} else if service.Name() == bruxism.DiscordServiceName {
+		} else if service.Name() == comicjerk.DiscordServiceName {
 			service.PrivateMessage(message.UserID(), "I have joined that server.")
 		}
 	}

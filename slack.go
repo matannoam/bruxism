@@ -1,4 +1,4 @@
-package bruxism
+package comicjerk
 
 import (
 	"errors"
