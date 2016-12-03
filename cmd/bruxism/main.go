@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	// "log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -17,17 +17,17 @@ import (
 	"github.com/iopred/bruxism/discordavatarplugin"
 	"github.com/iopred/bruxism/emojiplugin"
 	"github.com/iopred/bruxism/inviteplugin"
-	"github.com/iopred/bruxism/liveplugin"
 	"github.com/iopred/bruxism/mtgplugin"
 	"github.com/iopred/bruxism/musicplugin"
+	// "github.com/iopred/bruxism/liveplugin"
 	"github.com/iopred/bruxism/mysonplugin"
 	"github.com/iopred/bruxism/numbertriviaplugin"
 	"github.com/iopred/bruxism/playingplugin"
 	"github.com/iopred/bruxism/reminderplugin"
-	"github.com/iopred/bruxism/slowmodeplugin"
+	// "github.com/iopred/bruxism/slowmodeplugin"
 	"github.com/iopred/bruxism/statsplugin"
-	"github.com/iopred/bruxism/streamerplugin"
-	"github.com/iopred/bruxism/topstreamersplugin"
+	// "github.com/iopred/bruxism/streamerplugin"
+	// "github.com/iopred/bruxism/topstreamersplugin"
 	"github.com/iopred/bruxism/triviaplugin"
 	"github.com/iopred/bruxism/wormholeplugin"
 	"github.com/iopred/bruxism/youtubeinviteplugin"
@@ -111,26 +111,26 @@ func main() {
 
 	ytip := youtubeinviteplugin.New()
 
-	youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs)
-	err := youtube.Init()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// youtube := bruxism.NewYouTube(youtubeURL, youtubeAuth, youtubeConfigFilename, youtubeTokenFilename, youtubeLiveVideoIDs)
+	// err := youtube.Init()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	ytLiveChannel := bruxism.NewYTLiveChannel(youtube.Service)
+	// ytLiveChannel := bruxism.NewYTLiveChannel(youtube.Service)
 
-	bot.RegisterService(youtube)
+	// bot.RegisterService(youtube)
 
-	bot.RegisterPlugin(youtube, cp)
-	bot.RegisterPlugin(youtube, slowmodeplugin.New())
-	bot.RegisterPlugin(youtube, topstreamersplugin.New(youtube))
-	bot.RegisterPlugin(youtube, streamerplugin.New(youtube))
-	bot.RegisterPlugin(youtube, chartplugin.New())
-	bot.RegisterPlugin(youtube, comicplugin.New())
-	bot.RegisterPlugin(youtube, reminderplugin.New())
-	bot.RegisterPlugin(youtube, triviaplugin.New())
-	bot.RegisterPlugin(youtube, wormholeplugin.New())
-	bot.RegisterPlugin(youtube, liveplugin.New(ytLiveChannel))
+	// bot.RegisterPlugin(youtube, cp)
+	// bot.RegisterPlugin(youtube, slowmodeplugin.New())
+	// bot.RegisterPlugin(youtube, topstreamersplugin.New(youtube))
+	// bot.RegisterPlugin(youtube, streamerplugin.New(youtube))
+	// bot.RegisterPlugin(youtube, chartplugin.New())
+	// bot.RegisterPlugin(youtube, comicplugin.New())
+	// bot.RegisterPlugin(youtube, reminderplugin.New())
+	// bot.RegisterPlugin(youtube, triviaplugin.New())
+	// bot.RegisterPlugin(youtube, wormholeplugin.New())
+	// bot.RegisterPlugin(youtube, liveplugin.New(ytLiveChannel))
 
 	// Register the Discord service if we have an email or token.
 	if (discordEmail != "" && discordPassword != "") || discordToken != "" {
@@ -146,15 +146,15 @@ func main() {
 		bot.RegisterService(discord)
 
 		bot.RegisterPlugin(discord, cp)
-		bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
-		bot.RegisterPlugin(discord, streamerplugin.New(youtube))
+		// bot.RegisterPlugin(discord, topstreamersplugin.New(youtube))
+		// bot.RegisterPlugin(discord, streamerplugin.New(youtube))
 		bot.RegisterPlugin(discord, playingplugin.New())
 		bot.RegisterPlugin(discord, chartplugin.New())
 		bot.RegisterPlugin(discord, comicplugin.New())
 		bot.RegisterPlugin(discord, directmessageinviteplugin.New())
 		bot.RegisterPlugin(discord, reminderplugin.New())
 		bot.RegisterPlugin(discord, emojiplugin.New())
-		bot.RegisterPlugin(discord, liveplugin.New(ytLiveChannel))
+		// bot.RegisterPlugin(discord, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(discord, discordavatarplugin.New())
 		bot.RegisterPlugin(discord, musicplugin.New(discord))
 		if carbonitexKey != "" {
@@ -172,14 +172,14 @@ func main() {
 		bot.RegisterService(irc)
 
 		bot.RegisterPlugin(irc, cp)
-		bot.RegisterPlugin(irc, topstreamersplugin.New(youtube))
-		bot.RegisterPlugin(irc, streamerplugin.New(youtube))
+		// bot.RegisterPlugin(irc, topstreamersplugin.New(youtube))
+		// bot.RegisterPlugin(irc, streamerplugin.New(youtube))
 		bot.RegisterPlugin(irc, chartplugin.New())
 		bot.RegisterPlugin(irc, comicplugin.New())
 		bot.RegisterPlugin(irc, reminderplugin.New())
 		bot.RegisterPlugin(irc, triviaplugin.New())
 		bot.RegisterPlugin(irc, wormholeplugin.New())
-		bot.RegisterPlugin(irc, liveplugin.New(ytLiveChannel))
+		// bot.RegisterPlugin(irc, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(irc, ytip)
 	}
 
@@ -189,11 +189,11 @@ func main() {
 		bot.RegisterService(slack)
 
 		bot.RegisterPlugin(slack, cp)
-		bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
-		bot.RegisterPlugin(slack, streamerplugin.New(youtube))
+		// bot.RegisterPlugin(slack, topstreamersplugin.New(youtube))
+		// bot.RegisterPlugin(slack, streamerplugin.New(youtube))
 		bot.RegisterPlugin(slack, triviaplugin.New())
 		bot.RegisterPlugin(slack, wormholeplugin.New())
-		bot.RegisterPlugin(slack, liveplugin.New(ytLiveChannel))
+		// bot.RegisterPlugin(slack, liveplugin.New(ytLiveChannel))
 		bot.RegisterPlugin(slack, ytip)
 	}
 
