@@ -90,7 +90,7 @@ func makeScriptFromMessages(service comicjerk.Service, message comicjerk.Message
 
 func (p *comicPlugin) makeComic(bot *comicjerk.Bot, service comicjerk.Service, message comicjerk.Message, script *comicgen.Script) {
 	p.Comics++
-	comic := comicgen.NewComicGen("arial", service.Name() != comicjerk.DiscordServiceName)
+	comic := comicgen.NewComicGen("comic", service.Name() != comicjerk.DiscordServiceName)
 	image, err := comic.MakeComic(script)
 	if err != nil {
 		service.SendMessage(message.Channel(), fmt.Sprintf("Sorry %s, there was an error creating the comic. %s", message.UserName(), err))
