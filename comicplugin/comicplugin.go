@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/matannoam/comicjerk"
-	"github.com/iopred/comicgen"
+	"github.com/matannoam/comicgen"
 	"github.com/iopred/discordgo"
 )
 
